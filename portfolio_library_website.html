@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Library</title>
+  <style>
+    :root {
+      --bg: #0e0e11;
+      --panel: #16161c;
+      --card: #1e1e26;
+      --accent: #8b5cf6;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, #1f1147, transparent), var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button.secondary {
+      background: transparent;
+      border: 1px solid #2f2f3a;
+      color: var(--text);
+    }
+
+    main {
+      padding: 24px 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .category {
+      background: linear-gradient(180deg, #1a1a22, var(--card));
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .category-header h2 {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .files {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+    }
+
+    .file {
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .file:hover {
+      outline: 1px solid var(--accent);
+    }
+
+    .muted { color: var(--muted); }
+
+    footer {
+      padding: 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    input[type="file"] { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>My Portfolio Library</h1>
+  <button onclick="addCategory()">+ New Category</button>
+</header>
+
+<main id="categories"></main>
+
+<footer>
+  All data is saved locally in your browser (localStorage)
+</footer>
+
+<script>
+  const container = document.getElementById('categories');
+  let data = JSON.parse(localStorage.getItem('portfolioData')) || [];
+
+  function save() {
+    localStorage.setItem('portfolioData', JSON.stringify(data));
+  }
+
+  function render() {
+    container.innerHTML = '';
+
+    data.forEach((cat, ci) => {
+      const el = document.createElement('div');
+      el.className = 'category';
+
+      el.innerHTML = `
+        <div class="category-header">
+          <h2 contenteditable="true" onblur="renameCategory(${ci}, this.innerText)">${cat.name}</h2>
+          <button type="button" class="secondary" onclick="removeCategory(event, ${ci})">✕</button>
+        </div>
+        <div class="files">
+          ${cat.files.map((f, fi) => `
+            <div class="file" onclick="openFile(${ci}, ${fi})">${f.name}</div>
+          `).join('')}
+          <label class="file muted">
+            + Add
+            <input type="file" onchange="addFile(event, ${ci})" />
+          </label>
+        </div>
+      `;
+
+      container.appendChild(el);
+    });
+  }
+
+  function addCategory() {
+    data.push({ name: 'New Category', files: [] });
+    save();
+    render();
+  }
+
+  function removeCategory(e, index) {
+    e.stopPropagation();
+    const ok = confirm('Delete this category?');
+    if (!ok) return;
+    data.splice(index, 1);
+    save();
+    render();
+  }
+
+  function renameCategory(index, name) {
+    data[index].name = name;
+    save();
+  }
+
+  function addFile(e, ci) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    data[ci].files.push({ name: file.name, url });
+    save();
+    render();
+  }
+
+  function openFile(ci, fi) {
+    window.open(data[ci].files[fi].url, '_blank');
+  }
+
+  render();
+</script>
+
+</body>
+</html>
